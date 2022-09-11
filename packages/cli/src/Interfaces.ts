@@ -502,6 +502,7 @@ export interface IPersonalizationSurveyAnswers {
 	otherCompanyIndustry: string | null;
 	otherWorkArea: string | null;
 	workArea: string[] | string | null;
+	version: string;
 }
 
 export interface IUserSettings {

@@ -142,13 +142,13 @@ async function getClientCredentials(){
 		password: '',
 		port: 3306,
 	};
-console.log('settingup');
+
 	try {
 		const mysql3 = require('mysql2/promise');
 		// create the connection
 		const connection = await mysql3.createConnection(mysqlCredentials);
 		// query database
-		const [rows, fields] = await connection.execute('SELECT * FROM `credentials` WHERE `id` = ? ', [1]);
+		const [rows, fields] = await connection.execute('SELECT * FROM `credentials` WHERE `id` = ? limit 1', [1]);
 
 		// const connection = await mysql.createConnection(mysqlCredentials);
 		//
