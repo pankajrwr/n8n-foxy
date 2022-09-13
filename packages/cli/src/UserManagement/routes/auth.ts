@@ -21,20 +21,14 @@ export function authenticationMethods(this: N8nApp): void {
 	this.app.post(
 		`/${this.restEndpoint}/login`,
 		ResponseHelper.send(async (req: LoginRequest, res: Response): Promise<PublicUser> => {
-			console.log('coming here')
-			// if (!req.body.email) {
-			// 	throw new Error('Email is required to log in');
-			// }
-
-			// if (!req.body.password) {
-			// 	throw new Error('Password is required to log in');
-			// }
-
 			let user;
+			// Putting static storeId here. Later it will be extracted from the URL. eg. from http://store-12345.automations.foxydev.io/path/to/whatever/in/n8n store-12345 will be extracted and converted to foxy email
+			const storeId = 1234567;
+			const foxyUserEmail = `store-${storeId}@foxycart.com`;
 			try {
 				user = await Db.collections.User.findOne(
 					{
-						storeId: 123456,
+						email: foxyUserEmail,
 					},
 					{
 						relations: ['globalRole'],
@@ -46,26 +40,16 @@ export function authenticationMethods(this: N8nApp): void {
 
 			if (!user) {
 				user = {
-					id: 'sadfsdfadfs',
-					email: '123456',
+					email: foxyUserEmail,
 					personalizationAnswers: { version: 'v2' },
-					firstName: 'foxy',
-					lastName: 'Cart',
-					password: 'something Random',
+					firstName: storeId,
+					lastName: '',
+					password: 'much-secret',
 					globalRoleId: 2,
 					settings: { isOnboarded: true },
-					storeId: 123456,
 				};
 				await Db.collections.User.insert(user)
 			}
-
-			// if (!user || !user.password || !(await compareHash(req.body.password, user.password))) {
-			// 	// password is empty until user signs up
-			// 	const error = new Error('Wrong username or password. Do you have caps lock on?');
-			// 	// @ts-ignore
-			// 	error.httpStatusCode = 401;
-			// 	throw error;
-			// }
 
 			await issueCookie(res, user);
 
@@ -81,42 +65,28 @@ export function authenticationMethods(this: N8nApp): void {
 		ResponseHelper.send(async (req: Request, res: Response): Promise<PublicUser> => {
 			// Manually check the existing cookie.
 			const cookieContents = req.cookies?.[AUTH_COOKIE_NAME] as string | undefined;
-			console.log('cookie:', cookieContents)
 			let user: User;
 			if (cookieContents) {
-				console.log('inside if');
 				// If logged in, return user
 				try {
-				console.log('inside try');
-
 					user = await resolveJwt(cookieContents);
-console.log('user:', user);
 					if (!config.get('userManagement.isInstanceOwnerSetUp')) {
 						res.cookie(AUTH_COOKIE_NAME, cookieContents);
 					}
 
 					return sanitizeUser(user);
 				} catch (error) {
-					console.log('error:', error)
 					res.clearCookie(AUTH_COOKIE_NAME);
 				}
 			}
 
-			const url = req.protocol + '://' + req.get('host') + req.originalUrl;
-			const storeId = 1234;
-			console.log('first time auth failed', user);
-
-			// if (config.get('userManagement.isInstanceOwnerSetUp')) {
-			// 	const error = new Error('Not logged in');
-			// 	// @ts-ignore
-			// 	error.httpStatusCode = 401;
-			// 	throw error;
-			// }
-
+			// Putting static storeId here. Later it will be extracted from the URL. eg. from http://store-12345.automations.foxydev.io/path/to/whatever/in/n8n store-12345 will be extracted and converted to foxy email
+			const storeId = 1234567;
+			const foxyUserEmail = `store-${storeId}@foxycart.com`;
 			try {
 				user = await Db.collections.User.findOne(
 					{
-						storeId: 6718,
+						email: foxyUserEmail,
 					},
 					{
 						relations: ['globalRole'],
@@ -131,30 +101,16 @@ console.log('user:', user);
 
 			if (!user) {
 				user = {
-					id: 'sadfsd1fadf45s',
-					email: '6178',
-					firstName: 'foxy',
-					lastName: 'Cart',
-					password: 'something Random',
+					email: foxyUserEmail,
 					personalizationAnswers: { version: 'v2' },
+					firstName: storeId,
+					lastName: '',
+					password: 'much-secret',
 					globalRoleId: 2,
 					settings: { isOnboarded: true },
-					storeId: 6718,
 				};
 				await Db.collections.User.insert(user)
 			}
-
-			// try {
-			// 	user = await Db.collections.User.findOneOrFail({ relations: ['globalRole'] });
-			// } catch (error) {
-			// 	throw new Error(
-			// 		'No users found in database - did you wipe the users table? Create at least one user.',
-			// 	);
-			// }
-
-			// if (user.email || user.password) {
-			// 	throw new Error('Invalid database state - user has password set.');
-			// }
 
 			await issueCookie(res, user);
 
