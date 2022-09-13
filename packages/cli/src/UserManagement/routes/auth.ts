@@ -65,11 +65,13 @@ export function authenticationMethods(this: N8nApp): void {
 		ResponseHelper.send(async (req: Request, res: Response): Promise<PublicUser> => {
 			// Manually check the existing cookie.
 			const cookieContents = req.cookies?.[AUTH_COOKIE_NAME] as string | undefined;
+
 			let user: User;
 			if (cookieContents) {
 				// If logged in, return user
 				try {
 					user = await resolveJwt(cookieContents);
+
 					if (!config.get('userManagement.isInstanceOwnerSetUp')) {
 						res.cookie(AUTH_COOKIE_NAME, cookieContents);
 					}
