@@ -34,6 +34,10 @@ export class FoxyApi implements INodeType {
 		inputs: ['main'],
 		outputs: ['main'],
 		credentials: [
+			{
+				name: 'FoxyJwtApi',
+				required: true,
+			},
 		],
 		properties: uiProperties ,
 	};

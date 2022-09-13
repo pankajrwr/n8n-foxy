@@ -74,14 +74,27 @@ export async function freshdeskApiRequestAllItems(this: IExecuteFunctions | ILoa
 }
 
 export async function handleExecute(fns: IExecuteFunctions){
+	// import BackendAPIInit from ;
+	// type newType = typeof import('@foxy.io/sdk/dist/types/backend/API');
+	// let credentials: BackendAPIInit;
 
+	// const response = url.get();
+	// const foxySDK = require('@foxy.io/sdk');
+	// const api = new foxySDK.Backend.API
+	// 	.API({
+	// 	refreshToken: 'UIBRufC4TmSSQYbaVCqasAQgdGhEaBzAfGJS4dIg',
+	// 	clientSecret: 'wuwy5XRD86luAzmKvl7X65sSGL8Q9V6sxF4yF22l',
+	// 	clientId: 'client_j5Mbyv82R2BrZu67ibvw',
+	// });
+
+	// const credentials = await fns.getCredentials('FoxyJwtApi');
+
+	const credentialsFromDb = await getClientCredentials();
+
+	console.log('using db creds');
 	const foxySDK = require('@foxy.io/sdk');
 
-	const foxyApi = new foxySDK.Backend.API({
-		refreshToken: 'UIBRufC4TmSSQYbaVCqasAQgdGhEaBzAfGJS4dIg',
-		clientSecret: 'wuwy5XRD86luAzmKvl7X65sSGL8Q9V6sxF4yF22l',
-		clientId: 'client_j5Mbyv82R2BrZu67ibvw',
-	});
+	const foxyApi = new foxySDK.Backend.API(credentialsFromDb);
 
 	type Options = {
 		method?: string,
@@ -119,7 +132,7 @@ export async function handleExecute(fns: IExecuteFunctions){
 	return foxyResponse;
 }
 
-async function createRedisConnection(){
+async function getClientCredentials(){
 	// const mysql = require('mysql2/promise');
 	// const client = redis.createClient(redisOptions);
 	const mysqlCredentials = {
@@ -129,14 +142,13 @@ async function createRedisConnection(){
 		password: '',
 		port: 3306,
 	};
-console.log('settingup');
+
 	try {
 		const mysql3 = require('mysql2/promise');
 		// create the connection
 		const connection = await mysql3.createConnection(mysqlCredentials);
 		// query database
-		console.log('herer', connection)
-		const [rows, fields] = await connection.execute('SELECT * FROM `table` WHERE `name` = ? AND `age` > ?', ['Morty', 14]);
+		const [rows, fields] = await connection.execute('SELECT * FROM `credentials` WHERE `id` = ? limit 1', [1]);
 
 		// const connection = await mysql.createConnection(mysqlCredentials);
 		//
@@ -147,11 +159,14 @@ console.log('settingup');
 		// 	console.log(result) // "Some User token"
 		// })
 
-		console.log('queryrsult:', rows);
-		return rows
+		return {
+			clientId: rows[0].client_id,
+			clientSecret: rows[0].client_secret,
+			refreshToken: rows[0].refresh_token,
+		};
 	}
 	catch (e){
-	console.log('error:', e)
+	console.log('error:', e);
 	}
 
 }

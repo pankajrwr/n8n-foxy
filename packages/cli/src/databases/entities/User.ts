@@ -91,6 +91,9 @@ export class User {
 	@Column({ type: String, nullable: true })
 	resetPasswordToken?: string | null;
 
+	@Column({ type: String })
+	globalRoleId?: number;
+
 	// Expiration timestamp saved in seconds
 	@Column({ type: Number, nullable: true })
 	resetPasswordTokenExpiration?: number | null;

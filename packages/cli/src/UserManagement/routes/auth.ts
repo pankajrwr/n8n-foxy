@@ -21,19 +21,14 @@ export function authenticationMethods(this: N8nApp): void {
 	this.app.post(
 		`/${this.restEndpoint}/login`,
 		ResponseHelper.send(async (req: LoginRequest, res: Response): Promise<PublicUser> => {
-			if (!req.body.email) {
-				throw new Error('Email is required to log in');
-			}
-
-			if (!req.body.password) {
-				throw new Error('Password is required to log in');
-			}
-
 			let user;
+			// Putting static storeId here. Later it will be extracted from the URL. eg. from http://store-12345.automations.foxydev.io/path/to/whatever/in/n8n store-12345 will be extracted and converted to foxy email
+			const storeId = 1234567;
+			const foxyUserEmail = `store-${storeId}@foxycart.com`;
 			try {
 				user = await Db.collections.User.findOne(
 					{
-						email: req.body.email,
+						email: foxyUserEmail,
 					},
 					{
 						relations: ['globalRole'],
@@ -43,12 +38,17 @@ export function authenticationMethods(this: N8nApp): void {
 				throw new Error('Unable to access database.');
 			}
 
-			if (!user || !user.password || !(await compareHash(req.body.password, user.password))) {
-				// password is empty until user signs up
-				const error = new Error('Wrong username or password. Do you have caps lock on?');
-				// @ts-ignore
-				error.httpStatusCode = 401;
-				throw error;
+			if (!user) {
+				user = {
+					email: foxyUserEmail,
+					personalizationAnswers: { version: 'v2' },
+					firstName: storeId,
+					lastName: '',
+					password: 'much-secret',
+					globalRoleId: 2,
+					settings: { isOnboarded: true },
+				};
+				await Db.collections.User.insert(user)
 			}
 
 			await issueCookie(res, user);
@@ -82,23 +82,36 @@ export function authenticationMethods(this: N8nApp): void {
 				}
 			}
 
-			if (config.get('userManagement.isInstanceOwnerSetUp')) {
-				const error = new Error('Not logged in');
-				// @ts-ignore
-				error.httpStatusCode = 401;
-				throw error;
-			}
-
+			// Putting static storeId here. Later it will be extracted from the URL. eg. from http://store-12345.automations.foxydev.io/path/to/whatever/in/n8n store-12345 will be extracted and converted to foxy email
+			const storeId = 1234567;
+			const foxyUserEmail = `store-${storeId}@foxycart.com`;
 			try {
-				user = await Db.collections.User.findOneOrFail({ relations: ['globalRole'] });
+				user = await Db.collections.User.findOne(
+					{
+						email: foxyUserEmail,
+					},
+					{
+						relations: ['globalRole'],
+					},
+				);
+				// user = await Db.collections.User.findOneOrFail({ relations: ['globalRole'] });
 			} catch (error) {
 				throw new Error(
 					'No users found in database - did you wipe the users table? Create at least one user.',
 				);
 			}
 
-			if (user.email || user.password) {
-				throw new Error('Invalid database state - user has password set.');
+			if (!user) {
+				user = {
+					email: foxyUserEmail,
+					personalizationAnswers: { version: 'v2' },
+					firstName: storeId,
+					lastName: '',
+					password: 'much-secret',
+					globalRoleId: 2,
+					settings: { isOnboarded: true },
+				};
+				await Db.collections.User.insert(user)
 			}
 
 			await issueCookie(res, user);
